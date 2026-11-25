@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSS Rizz</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2312121a'/%3E%3Ctext x='32' y='47' font-family='monospace' font-size='40' font-weight='bold' fill='%23ff00ea' text-anchor='middle'%3ER%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --bg-dark: #0a0a0f;
+    --panel-bg: #12121a;
+    --text-main: #f0f0f0;
+    --text-muted: #888899;
+    --neon-cyan: #00f3ff;
+    --neon-magenta: #ff00ea;
+    --neon-green: #00ff88;
+    --neon-red: #ff0055;
+  }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---------- CRT SCANLINE OVERLAY ---------- */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.30) 0px,
+      rgba(0,0,0,0.30) 1px,
+      rgba(0,0,0,0)    1px,
+      rgba(0,0,0,0)    3px
+    );
+    opacity: 0.55;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9998;
+    background: radial-gradient(ellipse at 50% 0%, rgba(255,0,234,0.05), transparent 60%),
+                radial-gradient(ellipse at 50% 100%, rgba(0,243,255,0.05), transparent 60%);
+  }
+
+  /* ---------- LAYOUT ---------- */
+  #app {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  #sidebar {
+    width: 45%;
+    min-width: 360px;
+    max-width: 640px;
+    padding: 26px 30px 18px;
+    background: var(--panel-bg);
+    border-right: 1px solid rgba(0,243,255,0.14);
+    box-shadow: 8px 0 40px rgba(0,0,0,0.6);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    z-index: 2;
+  }
+
+  #sidebar::-webkit-scrollbar { width: 8px; }
+  #sidebar::-webkit-scrollbar-track { background: #0c0c12; }
+  #sidebar::-webkit-scrollbar-thumb {
+    background: linear-gradient(var(--neon-cyan), var(--neon-magenta));
+    border-radius: 8px;
+  }
+
+  /* ---------- TITLE ---------- */
+  .title {
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin: 0;
+    line-height: 1;
+    color: var(--neon-magenta);
+    text-shadow: 0 0 12px rgba(255,0,234,0.8), 0 0 34px rgba(255,0,234,0.4);
+    animation: titleFlicker 6s infinite;
+  }
+  .title span {
+    color: var(--neon-cyan);
+    text-shadow: 0 0 12px rgba(0,243,255,0.8), 0 0 34px rgba(0,243,255,0.4);
+  }
+  @keyframes titleFlicker {
+    0%, 96%, 100% { opacity: 1; }
+    97% { opacity: 0.55; }
+    98% { opacity: 1; }
+    99% { opacity: 0.7; }
+  }
+
+  /* ---------- LEVEL COUNTER ---------- */
+  #level-counter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    user-select: none;
+  }
+  #level-counter .arrow {
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--neon-cyan);
+    transition: all 0.15s ease;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-shadow: 0 0 8px rgba(0,243,255,0.6);
+  }
+  #level-counter .arrow:hover {
+    background: rgba(0,243,255,0.12);
+    transform: scale(1.15);
+  }
+  #level-counter .arrow.disabled {
+    opacity: 0.2;
+    cursor: default;
+    transform: none;
+    background: none;
+  }
+  #level-indicator .current {
+    color: var(--neon-cyan);
+    font-weight: 700;
+    font-size: 18px;
+    text-shadow: 0 0 10px rgba(0,243,255,0.8);
+  }
+  #level-indicator .total { color: var(--text-muted); }
+
+  /* ---------- RIZZ METER ---------- */
+  #rizz-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  #rizz-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  #rizz-meter {
+    flex: 1;
+    height: 8px;
+    background: #07070c;
+    border: 1px solid rgba(255,0,234,0.25);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+  #rizz-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green), var(--neon-magenta));
+    box-shadow: 0 0 14px rgba(0,255,136,0.7);
+    transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    border-radius: 6px;
+  }
+
+  /* ---------- INSTRUCTIONS ---------- */
+  #instructions {
+    font-size: 15px;
+    line-height: 1.62;
+    color: #cfcfe0;
+    min-height: 92px;
+  }
+  #instructions p { margin: 0 0 10px; }
+  #instructions p:last-child { margin-bottom: 0; }
+  #instructions strong { color: var(--neon-magenta); }
+  #instructions code {
+    font-family: 'Fira Code', monospace;
+    font-size: 13px;
+    background: rgba(0,255,136,0.08);
+    color: var(--neon-green);
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,255,136,0.18);
+  }
+
+  /* ---------- EDITOR ---------- */
+  #editor {
+    display: flex;
+    background: #0b0b11;
+    border: 1px solid rgba(0,243,255,0.22);
+    border-radius: 10px;
+    padding: 12px 0;
+    font-family: 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    overflow: hidden;
+    position: relative;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: inset 0 0 40px rgba(0,243,255,0.03);
+  }
+  #editor:focus-within {
+    border-color: rgba(0,243,255,0.55);
+    box-shadow: 0 0 24px rgba(0,243,255,0.16), inset 0 0 40px rgba(0,243,255,0.05);
+  }
+  .line-numbers {
+    padding: 0 10px 0 14px;
+    text-align: right;
+    color: #33334a;
+    user-select: none;
+    border-right: 1px solid rgba(255,255,255,0.055);
+    white-space: pre;
+    font-family: 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  #code-area {
+    flex: 1;
+    padding: 0 14px;
+    min-width: 0;
+  }
+  #before, #after, #code {
+    font-family: 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    white-space: pre;
+    margin: 0;
+    display: block;
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    resize: none;
+    overflow: hidden;
+    padding: 0;
+  }
+  #before, #after { color: #5c5c78; }
+  #code {
+    color: var(--neon-green);
+    caret-color: var(--neon-cyan);
+    text-shadow: 0 0 10px rgba(0,255,136,0.35);
+    min-height: 1.65em;
+  }
+  #code::placeholder { color: #2f2f42; }
+
+  /* ---------- SHAKE ---------- */
+  @keyframes glitchShake {
+    0%, 100% { transform: translateX(0) skewX(0); }
+    8%  { transform: translateX(-9px) skewX(3deg); }
+    16% { transform: translateX(8px)  skewX(-3deg); }
+    24% { transform: translateX(-7px) skewX(2deg); }
+    32% { transform: translateX(6px)  skewX(-2deg); }
+    40% { transform: translateX(-5px) skewX(1.5deg); }
+    50% { transform: translateX(4px)  skewX(-1.5deg); }
+    60% { transform: translateX(-3px); }
+    70% { transform: translateX(2px); }
+    80% { transform: translateX(-1px); }
+    90% { transform: translateX(1px); }
+  }
+  #editor.shake {
+    animation: glitchShake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+    border-color: var(--neon-red) !important;
+    box-shadow: 0 0 28px rgba(255,0,85,0.55) !important;
+  }
+
+  /* ---------- NEXT BUTTON ---------- */
+  #next {
+    margin-top: 2px;
+    padding: 14px 22px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 9px;
+    border: 1px solid rgba(0,243,255,0.3);
+    background: #0d0d15;
+    color: var(--text-muted);
+    transition: all 0.22s ease;
+    user-select: none;
+  }
+  #next:hover { border-color: rgba(0,243,255,0.6); color: #b8b8cc; }
+  #next.active {
+    background: var(--neon-green);
+    border-color: var(--neon-green);
+    color: #04120a;
+    text-shadow: none;
+    animation: nextPulse 1.3s ease-in-out infinite;
+  }
+  @keyframes nextPulse {
+    0%, 100% { box-shadow: 0 0 14px rgba(0,255,136,0.45), 0 0 0 rgba(0,255,136,0); }
+    50%      { box-shadow: 0 0 34px rgba(0,255,136,0.95), 0 0 60px rgba(0,255,136,0.35); }
+  }
+
+  /* ---------- FOOTER ---------- */
+  .social-links {
+    margin-top: auto;
+    padding-top: 8px;
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+  .social-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    border-bottom: 1px dashed rgba(255,0,234,0.4);
+    padding-bottom: 2px;
+    transition: all 0.2s ease;
+  }
+  .social-links a:hover {
+    color: var(--neon-magenta);
+    text-shadow: 0 0 10px rgba(255,0,234,0.8);
+    border-color: var(--neon-magenta);
+  }
+
+  /* ---------- BOARD PANEL ---------- */
+  #board-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 45%, #14141f 0%, #0a0a0f 62%),
+      repeating-linear-gradient(45deg, rgba(255,0,234,0.015) 0 2px, transparent 2px 10px);
+  }
+
+  #board-scale {
+    width: 500px;
+    height: 500px;
+    flex: 0 0 auto;
+  }
+
+  #board {
+    width: 500px;
+    height: 500px;
+    position: relative;
+    transform-origin: top left;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(0,243,255,0.28);
+    box-shadow:
+      0 0 0 1px rgba(255,0,234,0.12),
+      0 0 60px rgba(0,243,255,0.16),
+      0 0 120px rgba(255,0,234,0.09),
+      0 24px 60px rgba(0,0,0,0.8);
+    background: #08080e;
+  }
+
+  #soil {
+    position: absolute;
+    inset: 0;
+    background-color: #0b0b13;
+    background-image:
+      linear-gradient(rgba(0,243,255,0.085) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,243,255,0.085) 1px, transparent 1px);
+    background-size: 100px 100px;
+    background-position: -1px -1px;
+  }
+
+  #overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 20;
+    background: radial-gradient(circle at 50% 50%, transparent 42%, rgba(0,0,0,0.55) 100%);
+    box-shadow: inset 0 0 70px rgba(0,243,255,0.10);
+  }
+
+  #plants {
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    pointer-events: none;
+  }
+
+  #garden {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: repeat(5, 20%);
+    grid-template-rows: repeat(5, 20%);
+    font-size: 16px;
+  }
+
+  /* ---------- PLANTS ---------- */
+  .plant {
+    position: absolute;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    transition: opacity 0.2s ease;
+    overflow: hidden; /* <--- ADD THIS */
+  }
+  .plant.node    { background-image: var(--img-node); filter: drop-shadow(0 0 8px rgba(0,243,255,0.65)); }
+  .plant.corrupt { background-image: var(--img-corrupt); filter: drop-shadow(0 0 8px rgba(255,0,234,0.65)); }
+
+  #plants.solved .plant.node    { background-image: var(--img-node-ok);    filter: drop-shadow(0 0 12px rgba(0,255,136,0.9)); }
+  #plants.solved .plant.corrupt { background-image: var(--img-corrupt-ok); filter: drop-shadow(0 0 12px rgba(255,0,234,0.55)); }
+
+  /* ---------- WATER ---------- */
+  #water {
+    width: 100%;
+    height: 100%;
+    border: 1px solid rgba(0,243,255,0.85);
+    border-radius: 3px;
+    background-color: rgba(0,243,255,0.10);
+    background-image:
+      repeating-linear-gradient(0deg,  rgba(0,243,255,0.55) 0 1px, transparent 1px 20px),
+      repeating-linear-gradient(90deg, rgba(0,243,255,0.55) 0 1px, transparent 1px 20px),
+      linear-gradient(rgba(0,243,255,0.16), rgba(0,243,255,0.05));
+    box-shadow:
+      inset 0 0 34px rgba(0,243,255,0.45),
+      0 0 22px rgba(0,243,255,0.45);
+    animation: waterFlow 1.6s linear infinite;
+  }
+  @keyframes waterFlow {
+    from { background-position: 0 0, 0 0, 0 0; }
+    to   { background-position: 0 20px, 20px 0, 0 0; }
+  }
+
+  /* ---------- POISON ---------- */
+  #poison {
+    width: 100%;
+    height: 100%;
+    border: 1px solid rgba(255,0,234,0.85);
+    border-radius: 3px;
+    background-color: rgba(255,0,234,0.10);
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255,0,234,0.55) 0 5px, transparent 5px 14px),
+      linear-gradient(rgba(255,0,234,0.16), rgba(255,0,234,0.04));
+    box-shadow:
+      inset 0 0 34px rgba(255,0,234,0.5),
+      0 0 22px rgba(255,0,234,0.45);
+    animation: poisonGlitch 0.45s steps(2, end) infinite;
+  }
+  @keyframes poisonGlitch {
+    0%   { background-position: 0 0, 0 0; opacity: 1; }
+    25%  { background-position: 7px 3px, 0 0; opacity: 0.82; }
+    50%  { background-position: -4px 6px, 0 0; opacity: 1; }
+    75%  { background-position: 3px -5px, 0 0; opacity: 0.9; }
+    100% { background-position: 0 0, 0 0; opacity: 1; }
+  }
+
+  /* ---------- WIN MESSAGE ---------- */
+  #board-msg {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: var(--neon-green);
+    text-shadow: 0 0 20px rgba(0,255,136,0.9), 0 0 60px rgba(0,255,136,0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+    background: radial-gradient(circle, rgba(0,255,136,0.10), transparent 70%);
+  }
+  #board-msg.show { opacity: 1; }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 880px) {
+    #app { flex-direction: column; }
+    #sidebar {
+      width: 100%;
+      max-width: none;
+      min-width: 0;
+      height: 58vh;
+      border-right: none;
+      border-bottom: 1px solid rgba(0,243,255,0.14);
+      padding: 20px 20px 14px;
+    }
+    #board-wrap { flex: 1; padding: 12px; }
+    .title { font-size: 30px; }
+    #instructions { font-size: 14px; min-height: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ================= SIDEBAR ================= -->
+  <div id="sidebar">
+    <h1 class="title">CSS <span>Rizz</span></h1>
+
+    <div id="level-counter">
+      <span class="arrow left" id="arrow-left">&#9664;</span>
+      <span id="level-indicator">
+        <span class="current">1</span> / <span class="total">28</span>
+      </span>
+      <span class="arrow right" id="arrow-right">&#9654;</span>
+    </div>
+
+    <div id="rizz-wrap">
+      <span id="rizz-label">Rizz</span>
+      <div id="rizz-meter"><div id="rizz-fill"></div></div>
+      <button id="music-btn" style="background:none; border:none; color:var(--neon-cyan); cursor:pointer; font-size:16px; padding:0 0 0 8px; text-shadow:0 0 8px var(--neon-cyan);" title="Toggle Music">♪</button>
+    </div>
+
+    <div id="instructions"></div>
+
+    <div id="editor">
+      <div class="line-numbers" id="line-numbers"></div>
+      <div id="code-area">
+        <pre id="before"></pre><textarea id="code" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" wrap="off" placeholder="/* your css here */"></textarea><pre id="after"></pre>
+      </div>
+    </div>
+
+    <button id="next">NEXT</button>
+
+    <div class="social-links">
+      <a href="https://x.com/Anselm_wrenna" target="_blank" rel="noopener">CHECK X</a>
+    </div>
+  </div>
+
+  <!-- ================= BOARD ================= -->
+  <div id="board-wrap">
+    <div id="board-scale">
+      <div id="board">
+        <div id="soil"></div>
+        <div id="garden"></div>
+        <div id="plants"></div>
+        <div id="overlay"></div>
+        <div id="board-msg">SYSTEM&nbsp;HACKED</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================================
+   CSS RIZZ — a cyberpunk CSS Grid puzzle game
+   ========================================================================= */
+
+/* ---------------------------- SVG ASSETS -------------------------------- */
+const NODE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+<rect x="5" y="5" width="90" height="90" rx="12" fill="#0b1522" stroke="#00f3ff" stroke-width="3"/>
+<g fill="#00f3ff">
+<rect x="16" y="16" width="10" height="10" rx="2"/>
+<rect x="74" y="16" width="10" height="10" rx="2"/>
+<rect x="16" y="74" width="10" height="10" rx="2"/>
+<rect x="74" y="74" width="10" height="10" rx="2"/>
+<rect x="40" y="40" width="20" height="20" rx="4"/>
+</g>
+<g stroke="#00f3ff" stroke-width="2" opacity="0.6">
+<line x1="50" y1="7" x2="50" y2="27"/>
+<line x1="50" y1="73" x2="50" y2="93"/>
+<line x1="7" y1="50" x2="27" y2="50"/>
+<line x1="73" y1="50" x2="93" y2="50"/>
+</g>
+</svg>`;
+
+const NODE_OK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+<rect x="5" y="5" width="90" height="90" rx="12" fill="#06170f" stroke="#00ff88" stroke-width="4"/>
+<path d="M26 52 L44 70 L74 32" fill="none" stroke="#00ff88" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+const CORRUPT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+<polygon points="50,8 94,88 6,88" fill="#1a0a18" stroke="#ff00ea" stroke-width="5" stroke-linejoin="round"/>
+<rect x="46" y="34" width="8" height="26" rx="4" fill="#ff00ea"/>
+<circle cx="50" cy="72" r="5.5" fill="#ff00ea"/>
+</svg>`;
+
+const CORRUPT_OK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+<polygon points="50,8 94,88 6,88" fill="#12121a" stroke="#5a1a4e" stroke-width="5" stroke-linejoin="round"/>
+<path d="M36 44 L64 72 M64 44 L36 72" stroke="#ff00ea" stroke-width="7" stroke-linecap="round"/>
+</svg>`;
+
+function toURI(svg) {
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.replace(/\n/g, ''));
+}
+
+/* ---------------------------- DOM REFS ---------------------------------- */
+const $ = (id) => document.getElementById(id);
+
+const sidebarEl      = $('sidebar');
+const instructionsEl = $('instructions');
+const beforeEl       = $('before');
+const afterEl        = $('after');
+const codeEl         = $('code');
+const editorEl       = $('editor');
+const lineNumbersEl  = $('line-numbers');
+const nextBtn        = $('next');
+const arrowLeft      = $('arrow-left');
+const arrowRight     = $('arrow-right');
+const currentEl      = document.querySelector('#level-indicator .current');
+const totalEl        = document.querySelector('#level-indicator .total');
+const rizzFill       = $('rizz-fill');
+const boardEl        = $('board');
+const boardScaleEl   = $('board-scale');
+const gardenEl       = $('garden');
+const plantsEl       = $('plants');
+const boardMsg       = $('board-msg');
+
+/* Inject the plant background images as CSS variables */
+(function injectImages() {
+  const s = document.createElement('style');
+  s.textContent = `
+    :root {
+      --img-node: url("${toURI(NODE_SVG)}");
+      --img-node-ok: url("${toURI(NODE_OK_SVG)}");
+      --img-corrupt: url("${toURI(CORRUPT_SVG)}");
+      --img-corrupt-ok: url("${toURI(CORRUPT_OK_SVG)}");
+    }
+  `;
+  document.head.appendChild(s);
+})();
+
+/* Player stylesheet — always appended last so it wins the cascade */
+const playerStyle = document.createElement('style');
+document.head.appendChild(playerStyle);
+
+/* ---------------------------- AUDIO & MUSIC ----------------------------- */
+let audioCtx = null;
+let musicInterval = null;
+let isMusicPlaying = false;
+let currentStep = 0;
+
+// Synthwave bassline and arpeggio notes (frequencies in Hz)
+const BASS_SEQ = [55.00, 55.00, 65.41, 65.41, 49.00, 49.00, 58.27, 58.27]; // A1, A1, C2, C2, G1, G1, Bb1, Bb1
+const ARP_SEQ  = [440.00, 523.25, 659.25, 523.25, 392.00, 493.88, 587.33, 493.88]; // A4, C5, E5, C5, G4, B5, D5, B5
+
+function ensureAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch (e) { audioCtx = null; }
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function tone(freq, dur, type, vol, delay) {
+  if (!audioCtx) return;
+  const t0 = audioCtx.currentTime + (delay || 0);
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type || 'square';
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(vol || 0.05, t0 + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.02);
+}
+
+function playMusicStep() {
+  if (!audioCtx || !isMusicPlaying) return;
+  
+  const t = audioCtx.currentTime;
+  
+  // 1. Bassline (sawtooth, deep)
+  const bassOsc = audioCtx.createOscillator();
+  const bassGain = audioCtx.createGain();
+  const bassFilter = audioCtx.createBiquadFilter();
+  
+  bassOsc.type = 'sawtooth';
+  bassOsc.frequency.setValueAtTime(BASS_SEQ[currentStep % BASS_SEQ.length], t);
+  
+  bassFilter.type = 'lowpass';
+  bassFilter.frequency.setValueAtTime(400, t);
+  bassFilter.frequency.exponentialRampToValueAtTime(100, t + 0.2);
+  
+  bassGain.gain.setValueAtTime(0.0001, t);
+  bassGain.gain.exponentialRampToValueAtTime(0.08, t + 0.02);
+  bassGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+  
+  bassOsc.connect(bassFilter);
+  bassFilter.connect(bassGain);
+  bassGain.connect(audioCtx.destination);
+  bassOsc.start(t);
+  bassOsc.stop(t + 0.3);
+
+  // 2. Arpeggio (triangle, high melody) - only play on even steps for rhythm
+  if (currentStep % 2 === 0) {
+    const arpOsc = audioCtx.createOscillator();
+    const arpGain = audioCtx.createGain();
+    
+    arpOsc.type = 'triangle';
+    arpOsc.frequency.setValueAtTime(ARP_SEQ[currentStep % ARP_SEQ.length], t);
+    
+    arpGain.gain.setValueAtTime(0.0001, t);
+    arpGain.gain.exponentialRampToValueAtTime(0.04, t + 0.02);
+    arpGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+    
+    arpOsc.connect(arpGain);
+    arpGain.connect(audioCtx.destination);
+    arpOsc.start(t);
+    arpOsc.stop(t + 0.2);
+  }
+
+  currentStep++;
+}
+
+function startMusic() {
+  if (isMusicPlaying) return;
+  ensureAudio();
+  if (!audioCtx) return;
+  isMusicPlaying = true;
+  
+  // Reset the step counter if it gets too high to prevent memory leaks
+  if (currentStep > 1000) currentStep = 0;
+  
+  // 120 BPM = 500ms per beat
+  musicInterval = setInterval(playMusicStep, 250);
+}
+
+// Start music on first interaction
+function toggleMusic() {
+  if (isMusicPlaying) {
+    isMusicPlaying = false;
+    clearInterval(musicInterval);
+  } else {
+    startMusic();
+  }
+}
+window.addEventListener('click', startMusic, { once: true });
+window.addEventListener('keydown', startMusic, { once: true });
+
+function sfxSuccess() {
+  ensureAudio();
+  tone(880, 0.09, 'square', 0.05, 0);
+  tone(1174.66, 0.09, 'square', 0.045, 0.075);
+  tone(1567.98, 0.18, 'triangle', 0.05, 0.15);
+}
+function sfxFail() {
+  ensureAudio();
+  tone(120, 0.22, 'sawtooth', 0.06, 0);
+  tone(78, 0.30, 'sawtooth', 0.05, 0.06);
+}
+function sfxClick() {
+  ensureAudio();
+  tone(660, 0.045, 'square', 0.03, 0);
+}
+
+/* ---------------------------- LEVEL HELPERS ----------------------------- */
+function cells(type, list) {
+  return list.map(function (rc) {
+    return {
+      type: type,
+      x: (rc[1] - 1) * 100,
+      y: (rc[0] - 1) * 100,
+      w: 100,
+      h: 100
+    };
+  });
+}
+
+function tile(type, x, y, w, h, cols, rows) {
+  const out = [];
+  const cw = w / cols;
+  const ch = h / rows;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      out.push({ type: type, x: x + c * cw, y: y + r * ch, w: cw, h: ch });
+    }
+  }
+  return out;
+}
+
+const GARDEN_BASE =
+  '#garden {\n' +
+  '  display: grid;\n' +
+  '  grid-template-columns: repeat(5, 20%);\n' +
+  '  grid-template-rows: repeat(5, 20%);\n' +
+  '}\n\n';
+
+/* ---------------------------- LEVELS ------------------------------------ */
+const levels = [
+
+  /* -------- 1 -------- */
+  {
+    instructions: `<p>Welcome to <strong>CSS Rizz</strong>, where you write CSS to get your layout looking fresh! Hydrate only the areas that have glowing data nodes by using the <code>grid-column-start</code> property.</p>`,
+    selector: '#water',
+    before: GARDEN_BASE + '#water {\n',
+    after: '\n}',
+    plants: cells('node', [[1, 3]])
+  },
+
+  /* -------- 2 -------- */
+  {
+    instructions: `<p>Uh oh, looks like corrupted files are infecting the corner of your mainframe. Use <code>grid-column-start</code> to purge them. Note that the corrupted files start at the 5th vertical grid line.</p>`,
+    selector: '#poison',
+    before: GARDEN_BASE + '#poison {\n',
+    after: '\n}',
+    plants: cells('corrupt', [[1, 5]])
+  },
+
+  /* -------- 3 -------- */
+  {
+    instructions: `<p>When <code>grid-column-start</code> is used alone, the grid item by default will span exactly one column. However, you can extend the item across multiple columns by adding the <code>grid-column-end</code> property.</p><p>Using <code>grid-column-end</code>, hydrate all of your data nodes while avoiding the empty sectors.</p>`,
+    selector: '#water',
+    before: GARDEN_BASE + '#water {\n  grid-column-start: 1;\n',
+    after: '\n}',
+    plants: cells('node', [[1, 1], [1, 2], [1, 3]])
+  },
+
+  /* -------- 4 -------- */
+  {
+    instructions: `<p>The corrupted files are still lurking at the end of the sector. Lock the purge zone to vertical lines 3 through 6.</p>`,
+    selector: '#poison',
+    before: GARDEN_BASE + '#poison {\n  grid-column-start: 3;\n',
+    after: '\n}',
+    plants: cells('corrupt', [[1, 3], [1, 4], [1, 5]])
+  },
+
+  /* -------- 5 -------- */
+  {
+    instructions: `<p>Time to flex the shorthand. <code>grid-column</code> sets the start and end lines in a single declaration: <code>grid-column: start / end</code>.</p><p>Hydrate the two data nodes hugging the right edge.</p>`,
+    selector: '#water',
+    before: GARDEN_BASE + '#water {\n',
+    after: '\n}',
+    plants: cells('node', [[1, 4], [1, 5]])
+  },
+
+  /* -------- 6 -------- */
+  {
+    instructions: `<p>The entire top row is corrupted. Nuke it all with a single <code>grid-column</code> declaration.</p>`,
+    selector: '#poison',
+    before: GARDEN_BASE + '#poison {\n',
+    after: '\n}',
+    plants: cells('corrupt', [[1, 1], [1, 2], [1, 3], [1, 4], [1, 5]])
+  },
+
+  /* -------- 7 -------- */
+  {
+    instructions: `<p>Now for the vertical axis. Use <code>grid-row-start</code> to drop the power feed down to the node sitting in the third row.</p>`,
+    selector: '#water',
+    before: GARDEN_BASE + '#water {\n',
+    after: '\n}',
+    plants: cells('node', [[3, 1]])
+  },
+
+  /* -------- 8 -------- */
+  {
+    instructions: `<p>A corrupted file is hiding in the bottom-left corner. Send the purge down there with <code>grid-row-start</code>.</p>`,
+    selector: '#poison',
+    before: GARDEN_BASE + '#poison {\n',
+    after: '\n}',
+    plants: cells('corrupt', [[5, 1]])
+  },
+
+  /* -------- 9 -------- */
+  {
+    instructions: `<p><code>grid-row-end</code> extends an item downward. Hydrate the first three rows of the leftmost column.</p>`,
+    selector: '#water',
+    before: GARDEN_BASE + '#water {\n  grid-row-start: 1;\n',
+    after: '\n}',
+    plants: cells('node', [[1, 1], [2, 1], [3, 1]])
+  },
+
+  /* -------- 10 -------- */
+  {
+    instructions: `<p>Shorthand time again — <code>grid-row: start / end</code>. Reach the nodes living in rows 3 through 5.</p>`,
+    selector: '#water',
+    before: GARDEN_BASE + '#water {\n',
+    after: '\n}',
+    plants: cells('node', [[3, 1], [4, 1], [5, 1]])
+  },
+
+  /* -------- 11 -------- */
+  {
+    instructions: `<p>Purge the corrupted cluster occupying rows 2 through 4 of the first column using <code>grid-row</code>.</p>`,
+    selector: '#poison',
+    before: GARDEN_BASE + '#poison {\n',
+    after: '\n}',
+    plants: cells('corrupt', [[2, 1], [3, 1], [4, 1]])
+  },
+
+  /* -------- 12 -------- */
+  {
+    instructions: `<p><code>grid-area</code> is the ultimate flex: <code>row-start / column-start / row-end / column-end</code>. Hydrate the 2&times;2 block in the top-left corner.</p>`,
+    selector: '#water',
+    before: GARDEN_BASE + '#water {\n',
+    after: '\n}',
+    plants: cells('node', [[1, 1], [1, 2], [2, 1], [2, 2]])
+  },
+
+  /* -------- 13 -------- */
+  {
+    instructions: `<p>Purge the corrupted block spanning rows 2&ndash;4 and columns 3&ndash;4 with a single <code>grid-area</code>.</p>`,
+    selector: '#poison',
+    before: GARDEN_BASE + '#poison {\n',
+    after: '\n}',
+    plants: cells('corrupt', [[2, 3], [2, 4], [3, 3], [3, 4], [4, 3], [4, 4]])
+  },
+
+  /* -------- 14 -------- */
+  {
+    instructions: `<p>One full column of data nodes. Take the whole thing down with <code>grid-area</code>.</p>`,
+    selector: '#water',
+    before: GARDEN_BASE + '#water {\n',
+    after: '\n}',
+    plants: cells('node', [[1, 5], [2, 5], [3, 5], [4, 5], [5, 5]])
+  },
+
+  /* -------- 15 -------- */
+  {
+    instructions: `<p>Full-column purge. Combine <code>grid-column</code> and <code>grid-row</code> to wipe out the second column from top to bottom.</p>`,
+    selector: '#poison',
+    before: GARDEN_BASE + '#poison {\n',
+    after: '\n}',
+    plants: cells('corrupt', [[1, 2], [2, 2], [3, 2], [4, 2], [5, 2]])
+  },
+
+  /* -------- 16 -------- */
+  {
+    instructions: `<p>The mainframe is being re-partitioned into <strong>8 equal sectors</strong>. Use <code>grid-template-columns</code> with <code>repeat()</code> to split the grid into 8 columns of 12.5% each.</p>`,
+    selector: '#garden',
+    before: '#garden {\n  display: grid;\n  grid-template-rows: repeat(5, 20%);\n',
+    after: '\n}',
+    waterArea: '1 / 1 / 6 / 5',
+    plants: tile('node', 0, 0, 250, 500, 2, 5)
+  },
+
+  /* -------- 17 -------- */
+  {
+    instructions: `<p>Fractional units are the move. Split the columns into a <strong>1:5</strong> ratio with <code>fr</code> units so the power feed covers the main sector.</p>`,
+    selector: '#garden',
+    before: '#garden {\n  display: grid;\n  grid-template-rows: repeat(5, 20%);\n',
+    after: '\n}',
+    waterArea: '1 / 2 / 6 / 3',
+    plants: tile('node', 83.3333, 0, 416.6667, 500, 4, 5)
+  },
+
+  /* -------- 18 -------- */
+  {
+    instructions: `<p>Mixed units, mixed vibes. Define three columns: <code>100px</code>, <code>3em</code>, and <code>40%</code>.</p>`,
+    selector: '#garden',
+    before: '#garden {\n  display: grid;\n  grid-template-rows: repeat(5, 20%);\n',
+    after: '\n}',
+    waterArea: '1 / 1 / 6 / 4',
+    plants: tile('node', 0, 0, 348, 500, 3, 5)
+  },
+
+  /* -------- 19 -------- */
+  {
+    instructions: `<p>Set the columns to <code>75px 2fr 1fr</code> &mdash; a fixed firewall, then two proportional data lanes.</p>`,
+    selector: '#garden',
+    before: '#garden {\n  display: grid;\n  grid-template-rows: repeat(5, 20%);\n',
+    after: '\n}',
+    waterArea: '1 / 1 / 6 / 3',
+    plants: tile('node', 0, 0, 358.3333, 500, 3, 5)
+  },
+
+  /* -------- 20 -------- */
+  {
+    instructions: `<p>Symmetry check: <code>50px 1fr 1fr 1fr 50px</code>. Firewall barriers on both edges, three equal lanes in the middle.</p>`,
+    selector: '#garden',
+    before: '#garden {\n  display: grid;\n  grid-template-rows: repeat(5, 20%);\n',
+    after: '\n}',
+    waterArea: '1 / 2 / 6 / 5',
+    plants: tile('node', 50, 0, 400, 500, 4, 5)
+  },
+
+  /* -------- 21 -------- */
+  {
+    instructions: `<p>Rows this time. <code>grid-template-rows: 50px 0 0 0 1fr</code> &mdash; collapse the middle rows to nothing and hand everything else to the last row.</p>`,
+    selector: '#garden',
+    before: '#garden {\n  display: grid;\n  grid-template-columns: repeat(5, 20%);\n',
+    after: '\n}',
+    waterArea: '2 / 1 / 6 / 6',
+    plants: tile('node', 0, 50, 500, 450, 5, 4)
+  },
+
+  /* -------- 22 -------- */
+  {
+    instructions: `<p>The whole mainframe should be a single row. Set <code>grid-template-rows</code> to <code>100%</code>.</p>`,
+    selector: '#garden',
+    before: '#garden {\n  display: grid;\n  grid-template-columns: repeat(5, 20%);\n',
+    after: '\n}',
+    waterArea: '1 / 1 / 2 / 6',
+    plants: tile('node', 0, 0, 500, 500, 5, 5)
+  },
+
+  /* -------- 23 -------- */
+  {
+    instructions: `<p>The <code>grid-template</code> shorthand does both axes at once: <code>rows / columns</code>. Try <code>1fr 50px / 20% 1fr</code>.</p>`,
+    selector: '#garden',
+    before: '#garden {\n  display: grid;\n',
+    after: '\n}',
+    waterArea: '2 / 2 / 3 / 3',
+    plants: tile('node', 100, 450, 400, 50, 4, 1)
+  },
+
+  /* -------- 24 -------- */
+  {
+    instructions: `<p>Boss move. Combine <code>grid-template-columns: 75px 3fr 2fr</code> with <code>grid-template-rows: 100%</code>.</p>`,
+    selector: '#garden',
+    before: '#garden {\n  display: grid;\n',
+    after: '\n}',
+    waterArea: '1 / 2 / 2 / 4',
+    plants: tile('node', 75, 0, 425, 500, 4, 5)
+  },
+
+  /* -------- 25 -------- */
+  {
+    instructions: `<p>Big hydrate. Cover rows 1&ndash;2 across every single column.</p>`,
+    selector: '#water',
+    before: GARDEN_BASE + '#water {\n',
+    after: '\n}',
+    plants: cells('node', [[1, 1], [1, 2], [1, 3], [1, 4], [1, 5],
+                           [2, 1], [2, 2], [2, 3], [2, 4], [2, 5]])
+  },
+
+  /* -------- 26 -------- */
+  {
+    instructions: `<p>Vertical purge down the first column, rows 2 through 5. No mercy.</p>`,
+    selector: '#poison',
+    before: GARDEN_BASE + '#poison {\n',
+    after: '\n}',
+    plants: cells('corrupt', [[2, 1], [3, 1], [4, 1], [5, 1]])
+  },
+
+  /* -------- 27 -------- */
+  {
+    instructions: `<p>The bottom-right 3&times;3 block needs power. Get it done.</p>`,
+    selector: '#water',
+    before: GARDEN_BASE + '#water {\n',
+    after: '\n}',
+    plants: cells('node', [[3, 3], [3, 4], [3, 5],
+                           [4, 3], [4, 4], [4, 5],
+                           [5, 3], [5, 4], [5, 5]])
+  },
+
+  /* -------- 28 -------- */
+  {
+    instructions: `<p>Final purge: the entire central band &mdash; every row, columns 2 through 4. Make it clean.</p>`,
+    selector: '#poison',
+    before: GARDEN_BASE + '#poison {\n',
+    after: '\n}',
+    plants: cells('corrupt', [[1, 2], [1, 3], [1, 4],
+                              [2, 2], [2, 3], [2, 4],
+                              [3, 2], [3, 3], [3, 4],
+                              [4, 2], [4, 3], [4, 4],
+                              [5, 2], [5, 3], [5, 4]])
+  }
+];
+
+const WIN_TEXT =
+  `<p><strong>SYSTEM HACKED!</strong> By mastering the power of CSS Grid, you successfully routed all the data nodes and completely restored the mainframe. Your layout Rizz is truly unmatched.</p>` +
+  `<p>If you enjoyed CSS Rizz, keep flexing those CSS skills. The web is your canvas, so make sure your designs always have that drip.</p>`;
+
+/* ---------------------------- STATE ------------------------------------- */
+let levelIndex = 0;
+let maxReached = 0;
+const completed = new Set();
+let wasSolved = false;
+
+/* ---------------------------- RENDER ------------------------------------ */
+function render() {
+  const atWin = levelIndex >= levels.length;
+
+  /* ----- WIN SCREEN ----- */
+  if (atWin) {
+    instructionsEl.innerHTML = WIN_TEXT;
+    editorEl.style.display = 'none';
+    nextBtn.textContent = 'REBOOT';
+    nextBtn.classList.add('active');
+    currentEl.textContent = levels.length;
+    boardMsg.classList.add('show');
+
+    gardenEl.innerHTML = '';
+    plantsEl.innerHTML = '';
+    plantsEl.classList.remove('solved');
+    playerStyle.textContent = '';
+
+    updateNav();
+    updateRizz();
+    return;
+  }
+
+  /* ----- NORMAL LEVEL ----- */
+  editorEl.style.display = 'flex';
+  nextBtn.textContent = 'NEXT';
+  boardMsg.classList.remove('show');
+
+  const L = levels[levelIndex];
+
+  instructionsEl.innerHTML = L.instructions;
+  beforeEl.textContent = L.before;
+  afterEl.textContent = L.after;
+  codeEl.value = '';
+
+  /* Garden */
+  gardenEl.innerHTML = '';
+  plantsEl.innerHTML = '';
+  plantsEl.classList.remove('solved');
+
+  const which = (L.selector === '#poison') ? 'poison' : 'water';
+  const fieldEl = document.createElement('div');
+  fieldEl.id = which;
+  if (which === 'water' && L.waterArea) fieldEl.style.gridArea = L.waterArea;
+  if (which === 'poison' && L.poisonArea) fieldEl.style.gridArea = L.poisonArea;
+  gardenEl.appendChild(fieldEl);
+
+  /* Plants */
+  L.plants.forEach(function (p) {
+    const d = document.createElement('div');
+    d.className = 'plant ' + (p.type === 'corrupt' ? 'corrupt' : 'node');
+    d.style.left = p.x + 'px';
+    d.style.top = p.y + 'px';
+    d.style.width = p.w + 'px';
+    d.style.height = p.h + 'px';
+    plantsEl.appendChild(d);
+  });
+
+  currentEl.textContent = levelIndex + 1;
+
+  wasSolved = false;
+  applyCSS();
+  updateEditor();
+  updateNav();
+  updateRizz();
+  refreshSolutionState(true);
+}
+
+/* ---------------------------- EDITOR ------------------------------------ */
+function applyCSS() {
+  if (levelIndex >= levels.length) { playerStyle.textContent = ''; return; }
+  const L = levels[levelIndex];
+  // This correctly applies the grid base, the user's code, and the closing bracket
+  playerStyle.textContent = L.before + codeEl.value + L.after;
+}
+
+function updateEditor() {
+  /* Auto-grow the textarea */
+  codeEl.style.height = '0px';
+  codeEl.style.height = Math.max(codeEl.scrollHeight, 22) + 'px';
+
+  /* Line numbers for the whole visible block */
+  const full = beforeEl.textContent + codeEl.value + afterEl.textContent;
+  const n = full.split('\n').length;
+  let out = '';
+  for (let i = 1; i <= n; i++) out += i + '\n';
+  lineNumbersEl.textContent = out;
+}
+
+/* ---------------------------- SOLUTION CHECK ---------------------------- */
+function rectOf(el) { return el.getBoundingClientRect(); }
+
+function contains(outer, inner, tol) {
+  return outer.left   <= inner.left   + tol &&
+         outer.top    <= inner.top    + tol &&
+         outer.right  >= inner.right  - tol &&
+         outer.bottom >= inner.bottom - tol;
+}
+
+function intersects(a, b, tol) {
+  return !(a.right  <= b.left   + tol ||
+           a.left   >= b.right  - tol ||
+           a.bottom <= b.top    + tol ||
+           a.top    >= b.bottom - tol);
+}
+
+function sumArea(els) {
+  let a = 0;
+  els.forEach(function (e) {
+    const r = e.getBoundingClientRect();
+    a += r.width * r.height;
+  });
+  return a;
+}
+
+function isSolved() {
+  if (levelIndex >= levels.length) return false;
+
+  const waterEl   = gardenEl.querySelector('#water');
+  const poisonEl  = gardenEl.querySelector('#poison');
+  const nodes     = Array.prototype.slice.call(plantsEl.querySelectorAll('.node'));
+  const corrupts  = Array.prototype.slice.call(plantsEl.querySelectorAll('.corrupt'));
+
+  // TOLERANCE: 5px allows for minor sub-pixel rendering differences
+  const TOL = 5; 
+
+  /* ----- DATA NODES vs WATER ----- */
+  if (nodes.length) {
+    if (!waterEl) return false;
+    const wr = rectOf(waterEl);
+    if (wr.width < 1 || wr.height < 1) return false;
+
+    // Check if every node is contained inside the water
+    for (let i = 0; i < nodes.length; i++) {
+      if (!contains(wr, rectOf(nodes[i]), TOL)) return false;
+    }
+
+    // Check if the water area matches the node area
+    const wa = wr.width * wr.height;
+    const na = sumArea(nodes);
+    if (wa <= 0) return false;
+    if (Math.abs(wa - na) / wa > 0.10) return false; 
+  }
+
+  /* ----- CORRUPTED FILES vs POISON ----- */
+  if (corrupts.length) {
+    if (!poisonEl) return false;
+    const pr = rectOf(poisonEl);
+    if (pr.width < 1 || pr.height < 1) return false;
+
+    // Check if every corrupt file is contained inside the poison
+    for (let i = 0; i < corrupts.length; i++) {
+      if (!contains(pr, rectOf(corrupts[i]), TOL)) return false;
+    }
+
+    // Check if the poison area matches the corrupt area
+    const pa = pr.width * pr.height;
+    const ca = sumArea(corrupts);
+    if (pa <= 0) return false;
+    if (Math.abs(pa - ca) / pa > 0.10) return false; 
+  }
+
+  /* ----- CROSS CONTAMINATION ----- */
+  // Check if water is accidentally touching corrupted files
+  if (waterEl && corrupts.length) {
+    const wr = rectOf(waterEl);
+    for (let i = 0; i < corrupts.length; i++) {
+      if (intersects(wr, rectOf(corrupts[i]), TOL)) return false;
+    }
+  }
+  
+  // Check if poison is accidentally touching data nodes
+  if (poisonEl && nodes.length) {
+    const pr = rectOf(poisonEl);
+    for (let i = 0; i < nodes.length; i++) {
+      if (intersects(pr, rectOf(nodes[i]), TOL)) return false;
+    }
+  }
+
+  return true;
+}
+/* ---------------------------- UI UPDATES -------------------------------- */
+function updateRizz() {
+  const pct = (completed.size / levels.length) * 100;
+  rizzFill.style.width = pct.toFixed(2) + '%';
+}
+
+function updateNav() {
+  totalEl.textContent = levels.length;
+  arrowLeft.classList.toggle('disabled', levelIndex <= 0);
+  // Remove the restriction on the right arrow so you can go to any level
+  arrowRight.classList.toggle('disabled', levelIndex >= levels.length);
+}
+/* ---------------------------- SHAKE ------------------------------------- */
+function shakeEditor() {
+  editorEl.classList.remove('shake');
+  /* force reflow so the animation restarts */
+  void editorEl.offsetWidth;
+  editorEl.classList.add('shake');
+  setTimeout(function () { editorEl.classList.remove('shake'); }, 600);
+}
+
+/* ---------------------------- NAVIGATION -------------------------------- */
+function goToLevel(i) {
+  if (i < 0 || i >= levels.length) return; // Allow any level within bounds
+  levelIndex = i;
+  if (levelIndex > maxReached) maxReached = levelIndex;
+  render();
+}
+
+function advance() {
+  if (levelIndex >= levels.length) return;
+  if (!isSolved()) {
+    shakeEditor();
+    sfxFail();
+    return;
+  }
+
+  completed.add(levelIndex);
+  updateRizz();
+  sfxClick();
+
+  levelIndex++;
+  if (levelIndex > maxReached) maxReached = levelIndex;
+  render();
+}
+
+function reboot() {
+  levelIndex = 0;
+  maxReached = 0;
+  completed.clear();
+  render();
+}
+
+/* ---------------------------- EVENTS ------------------------------------ */
+codeEl.addEventListener('input', function () {
+  applyCSS();
+  updateEditor();
+  refreshSolutionState(false);
+});
+
+/* Keep the cursor visible and allow Tab to insert two spaces */
+codeEl.addEventListener('keydown', function (e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const start = codeEl.selectionStart;
+    const end = codeEl.selectionEnd;
+    codeEl.value = codeEl.value.substring(0, start) + '  ' + codeEl.value.substring(end);
+    codeEl.selectionStart = codeEl.selectionEnd = start + 2;
+    applyCSS();
+    updateEditor();
+    refreshSolutionState(false);
+  }
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault();
+    advance();
+  }
+});
+
+nextBtn.addEventListener('click', function () {
+  ensureAudio();
+  if (levelIndex >= levels.length) { reboot(); return; }
+  advance();
+});
+
+arrowLeft.addEventListener('click', function () {
+  ensureAudio();
+  if (levelIndex <= 0) return;
+  sfxClick();
+  goToLevel(levelIndex - 1);
+});
+
+arrowRight.addEventListener('click', function () {
+  ensureAudio();
+  if (levelIndex >= levels.length) return;
+  sfxClick();
+  goToLevel(levelIndex + 1);
+});
+
+/* ---------------------------- BOARD SCALING ----------------------------- */
+function resizeBoard() {
+  const wrap = document.getElementById('board-wrap');
+  const availW = wrap.clientWidth  - 40;
+  const availH = wrap.clientHeight - 40;
+  const avail = Math.min(availW, availH);
+  let scale = avail / 500;
+  scale = Math.max(0.30, Math.min(scale, 1.55));
+  boardScaleEl.style.width  = (500 * scale) + 'px';
+  boardScaleEl.style.height = (500 * scale) + 'px';
+  boardEl.style.transform = 'scale(' + scale + ')';
+}
+
+window.addEventListener('resize', resizeBoard);
+window.addEventListener('orientationchange', function () {
+  setTimeout(resizeBoard, 120);
+});
+
+/* ---------------------------- BOOT -------------------------------------- */
+(function boot() {
+  /* Make sure the player stylesheet sits after every other stylesheet */
+  document.head.appendChild(playerStyle);
+
+  resizeBoard();
+
+  /* Prime the audio context on the first user interaction */
+  ['click', 'keydown', 'touchstart'].forEach(function (evt) {
+    window.addEventListener(evt, ensureAudio, { once: true });
+  });
+
+  render();
+  requestAnimationFrame(resizeBoard);
+    const musicBtn = document.getElementById('music-btn');
+  if (musicBtn) {
+    musicBtn.addEventListener('click', function(e) {
+      e.stopPropagation(); // Prevent triggering the window click
+      toggleMusic();
+    });
+  }
+})();
+</script>
+</body>
+</html>
